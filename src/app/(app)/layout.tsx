@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
+import { BugReportWidget } from "@/components/bug-report-widget";
 import { CommandPalette } from "@/components/command-palette";
 import { Topbar } from "@/components/topbar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -15,6 +16,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </main>
       </SidebarInset>
       <CommandPalette />
+      <BugReportWidget />
     </SidebarProvider>
   );
 }

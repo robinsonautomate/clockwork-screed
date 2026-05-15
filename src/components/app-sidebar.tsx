@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Bug,
   CalendarDays,
   FileText,
   HardHat,
@@ -36,6 +37,7 @@ const NAV = [
   { href: "/contacts", label: "Contacts", icon: Users },
   { href: "/invoices", label: "Invoices", icon: ReceiptText },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/bugs", label: "Bug log", icon: Bug },
 ] as const;
 
 export function AppSidebar() {

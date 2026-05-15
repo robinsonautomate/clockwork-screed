@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Field } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
   createCrew,
   createScreedType,
   createTruck,
+  deleteAllData,
   deleteCrew,
   deleteScreedType,
   deleteTruck,
@@ -61,7 +62,100 @@ export function SettingsPanels({
       <CrewsPanel crews={crews} />
       <TrucksPanel trucks={trucks} />
       <ScreedTypesPanel screedTypes={screedTypes} />
+      <DangerZone />
     </div>
+  );
+}
+
+/* ── Danger zone ──────────────────────────────────────────────────────── */
+
+function DangerZone() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function wipe() {
+    setBusy(true);
+    const res = await deleteAllData();
+    setBusy(false);
+    if (res.ok) {
+      toast.success("All operational data deleted");
+      setOpen(false);
+      setConfirmText("");
+      router.refresh();
+    } else {
+      toast.error(res.error);
+    }
+  }
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-rose-200 bg-white">
+      <div className="border-b border-rose-200 bg-rose-50 px-4 py-3">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-rose-800">
+          <AlertTriangle className="size-4" />
+          Danger zone
+        </h2>
+        <p className="text-xs text-rose-600">
+          Irreversible — clears the platform to start fresh.
+        </p>
+      </div>
+      <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-slate-600">
+          Delete all contacts, enquiries, quotes, jobs, pour records and
+          invoices. Crews, trucks, the screed catalog and the bug log are kept.
+        </p>
+        <Dialog
+          open={open}
+          onOpenChange={(o) => {
+            setOpen(o);
+            if (!o) setConfirmText("");
+          }}
+        >
+          <DialogTrigger asChild>
+            <Button variant="destructive" className="shrink-0">
+              <Trash2 className="size-4" /> Delete all data
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-rose-700">
+                <AlertTriangle className="size-4" /> Delete all data?
+              </DialogTitle>
+              <DialogDescription>
+                This permanently removes every contact, enquiry, quote, job,
+                pour record and invoice. This cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                Kept: crews, trucks, screed-type catalog and the bug log. You
+                can repopulate demo data afterwards with{" "}
+                <span className="font-mono">pnpm seed</span>.
+              </p>
+              <Field label="Type DELETE to confirm">
+                <Input
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  autoComplete="off"
+                />
+              </Field>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="destructive"
+                onClick={wipe}
+                disabled={busy || confirmText !== "DELETE"}
+              >
+                {busy && <Loader2 className="size-4 animate-spin" />}
+                Permanently delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </section>
   );
 }
 

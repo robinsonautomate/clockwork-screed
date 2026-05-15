@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { crews, screedTypes, trucks } from "@/lib/db/schema";
 import { normalizeName } from "@/lib/format";
@@ -139,5 +139,36 @@ export async function updateScreedType(
 export async function deleteScreedType(id: string): Promise<ActionResult> {
   await db.delete(screedTypes).where(eq(screedTypes.id, id));
   revalidate();
+  return { ok: true };
+}
+
+/* ── Danger zone ──────────────────────────────────────────────────────── */
+
+/**
+ * Wipe all operational records — contacts, sites, enquiries, quotes, jobs,
+ * pour records and invoices. The catalog (crews, trucks, screed types) and
+ * the bug log are kept so the platform stays usable.
+ */
+export async function deleteAllData(): Promise<ActionResult> {
+  await db.execute(sql`
+    truncate table
+      clockwork.invoice_lines, clockwork.invoices, clockwork.pour_records,
+      clockwork.jobs, clockwork.quote_lines, clockwork.quotes,
+      clockwork.enquiries, clockwork.sites, clockwork.contacts
+    restart identity cascade
+  `);
+
+  for (const path of [
+    "/",
+    "/contacts",
+    "/enquiries",
+    "/quotes",
+    "/jobs",
+    "/schedule",
+    "/invoices",
+    "/settings",
+  ]) {
+    revalidatePath(path);
+  }
   return { ok: true };
 }

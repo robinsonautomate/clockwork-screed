@@ -15,6 +15,9 @@ const STYLES: Record<string, string> = {
   cancelled: "bg-slate-100 text-slate-500",
   paid: "bg-emerald-100 text-emerald-700",
   overdue: "bg-rose-100 text-rose-700",
+  open: "bg-rose-100 text-rose-700",
+  resolved: "bg-emerald-100 text-emerald-700",
+  wont_fix: "bg-slate-100 text-slate-500",
 };
 
 export function formatStatusLabel(status: string): string {

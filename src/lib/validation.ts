@@ -126,6 +126,20 @@ export const screedTypeSchema = z.object({
 });
 export type ScreedTypeInput = z.infer<typeof screedTypeSchema>;
 
+/* ── Bug reports ──────────────────────────────────────────────────────── */
+
+export const bugReportSchema = z.object({
+  summary: z
+    .string()
+    .trim()
+    .min(4, "Briefly describe the problem")
+    .max(160),
+  detail: optionalText(2000),
+  pageUrl: optionalText(300),
+  severity: z.enum(["low", "medium", "high"]),
+});
+export type BugReportInput = z.infer<typeof bugReportSchema>;
+
 /* ── Job scheduling ───────────────────────────────────────────────────── */
 
 export const jobScheduleSchema = z.object({

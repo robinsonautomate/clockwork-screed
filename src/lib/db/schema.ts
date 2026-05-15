@@ -79,6 +79,19 @@ export const pourConditions = cws.enum("pour_conditions", [
   "hot",
 ]);
 
+export const bugStatus = cws.enum("bug_status", [
+  "open",
+  "in_progress",
+  "resolved",
+  "wont_fix",
+]);
+
+export const bugSeverity = cws.enum("bug_severity", [
+  "low",
+  "medium",
+  "high",
+]);
+
 const createdAt = timestamp({ withTimezone: true }).defaultNow().notNull();
 
 /* ── Tables ───────────────────────────────────────────────────────────── */
@@ -260,6 +273,19 @@ export const invoiceLines = cws.table("invoice_lines", {
   sortOrder: integer().notNull().default(0),
 });
 
+/** Bug reports — submitted from the in-app widget, triaged on /bugs. */
+export const bugReports = cws.table("bug_reports", {
+  id: uuid().primaryKey().defaultRandom(),
+  summary: text().notNull(),
+  detail: text(),
+  pageUrl: text(),
+  severity: bugSeverity().notNull().default("medium"),
+  status: bugStatus().notNull().default("open"),
+  resolutionNote: text(),
+  createdAt,
+  resolvedAt: timestamp({ withTimezone: true }),
+});
+
 /* ── Relations — power Drizzle relational queries (db.query.*) ─────────── */
 
 export const contactsRelations = relations(contacts, ({ many }) => ({
@@ -362,6 +388,11 @@ export type Invoice = typeof invoices.$inferSelect;
 export type NewInvoice = typeof invoices.$inferInsert;
 export type InvoiceLine = typeof invoiceLines.$inferSelect;
 export type NewInvoiceLine = typeof invoiceLines.$inferInsert;
+export type BugReport = typeof bugReports.$inferSelect;
+export type NewBugReport = typeof bugReports.$inferInsert;
+
+export type BugStatus = (typeof bugStatus.enumValues)[number];
+export type BugSeverity = (typeof bugSeverity.enumValues)[number];
 
 export type ContactRole = (typeof contactRole.enumValues)[number];
 export type ProjectType = (typeof projectType.enumValues)[number];
