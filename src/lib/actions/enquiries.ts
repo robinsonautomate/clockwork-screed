@@ -1,12 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { contacts, enquiries, sites } from "@/lib/db/schema";
+import { normalizeName } from "@/lib/format";
 import {
   enquirySchema,
+  enquiryUpdateSchema,
   type ActionResult,
   type EnquiryInput,
+  type EnquiryUpdateInput,
 } from "@/lib/validation";
 
 export async function createEnquiry(
@@ -30,8 +34,10 @@ export async function createEnquiry(
     const [created] = await db
       .insert(contacts)
       .values({
-        name: v.newContactName,
-        company: v.newContactCompany || null,
+        name: normalizeName(v.newContactName),
+        company: v.newContactCompany
+          ? normalizeName(v.newContactCompany)
+          : null,
         role: v.newContactRole ?? "self-builder",
         email: v.newContactEmail || null,
         phone: v.newContactPhone || null,
@@ -44,9 +50,9 @@ export async function createEnquiry(
     .insert(sites)
     .values({
       contactId,
-      addressLine1: v.addressLine1,
-      addressLine2: v.addressLine2 || null,
-      town: v.town,
+      addressLine1: normalizeName(v.addressLine1),
+      addressLine2: v.addressLine2 ? normalizeName(v.addressLine2) : null,
+      town: normalizeName(v.town),
       postcode: v.postcode.toUpperCase(),
       accessNotes: v.accessNotes || null,
     })
@@ -72,4 +78,36 @@ export async function createEnquiry(
   revalidatePath("/contacts");
   revalidatePath("/");
   return { ok: true, data: { id: enquiry.id } };
+}
+
+export async function updateEnquiry(
+  input: EnquiryUpdateInput,
+): Promise<ActionResult> {
+  const parsed = enquiryUpdateSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Check the enquiry details",
+    };
+  }
+  const v = parsed.data;
+
+  await db
+    .update(enquiries)
+    .set({
+      projectType: v.projectType,
+      screedType: v.screedType,
+      targetDate: v.targetDate || null,
+      areaM2: String(v.areaM2),
+      depthMm: v.depthMm,
+      source: v.source || null,
+      notes: v.notes || null,
+      status: v.status,
+    })
+    .where(eq(enquiries.id, v.id));
+
+  revalidatePath("/enquiries");
+  revalidatePath(`/enquiries/${v.id}`);
+  revalidatePath("/");
+  return { ok: true };
 }

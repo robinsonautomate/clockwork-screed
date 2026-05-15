@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { getCrews, getTrucks } from "@/lib/queries/catalog";
 import { getJob } from "@/lib/queries/jobs";
 import {
+  capitalize,
   formatArea,
   formatDate,
   formatDateTime,
@@ -74,6 +75,9 @@ export default async function JobDetailPage({
               scheduledDate={job.scheduledDate}
               crewId={job.crewId}
               truckId={job.truckId}
+              screedType={job.screedType}
+              areaM2={job.areaM2}
+              depthMm={job.depthMm}
               crews={crews.map((c) => ({ id: c.id, name: c.name }))}
               trucks={trucks.map((t) => ({ id: t.id, name: t.name }))}
             />
@@ -193,7 +197,7 @@ export default async function JobDetailPage({
                   />
                   <Spec
                     label="Conditions"
-                    value={pour.conditions ?? "—"}
+                    value={pour.conditions ? capitalize(pour.conditions) : "—"}
                   />
                 </div>
 

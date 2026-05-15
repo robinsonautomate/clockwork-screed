@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarCog, Loader2 } from "lucide-react";
+import { Loader2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Field } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,9 @@ export function JobScheduleDialog({
   scheduledDate,
   crewId,
   truckId,
+  screedType,
+  areaM2,
+  depthMm,
   crews,
   trucks,
 }: {
@@ -39,6 +42,9 @@ export function JobScheduleDialog({
   scheduledDate: string;
   crewId: string | null;
   truckId: string | null;
+  screedType: string;
+  areaM2: string;
+  depthMm: number;
   crews: Option[];
   trucks: Option[];
 }) {
@@ -47,6 +53,9 @@ export function JobScheduleDialog({
   const [date, setDate] = useState(scheduledDate);
   const [crew, setCrew] = useState(crewId ?? "none");
   const [truck, setTruck] = useState(truckId ?? "none");
+  const [screed, setScreed] = useState(screedType);
+  const [area, setArea] = useState(areaM2);
+  const [depth, setDepth] = useState(String(depthMm));
   const [saving, setSaving] = useState(false);
 
   async function save() {
@@ -56,10 +65,13 @@ export function JobScheduleDialog({
       scheduledDate: date,
       crewId: crew === "none" ? "" : crew,
       truckId: truck === "none" ? "" : truck,
+      screedType: screed,
+      areaM2: Number(area),
+      depthMm: Number(depth),
     });
     setSaving(false);
     if (res.ok) {
-      toast.success("Schedule updated");
+      toast.success("Job updated");
       setOpen(false);
       router.refresh();
     } else {
@@ -71,14 +83,14 @@ export function JobScheduleDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
-          <CalendarCog className="size-4" /> Edit schedule
+          <Pencil className="size-4" /> Edit job
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Edit schedule</DialogTitle>
+          <DialogTitle>Edit job</DialogTitle>
           <DialogDescription>
-            Set the pour date and assign a crew and truck.
+            Update the pour schedule, crew, truck and specification.
           </DialogDescription>
         </DialogHeader>
 
@@ -90,46 +102,75 @@ export function JobScheduleDialog({
               onChange={(e) => setDate(e.target.value)}
             />
           </Field>
-          <Field label="Crew">
-            <Select value={crew} onValueChange={setCrew}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Unassigned</SelectItem>
-                {crews.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Crew">
+              <Select value={crew} onValueChange={setCrew}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {crews.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Truck">
+              <Select value={truck} onValueChange={setTruck}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {trucks.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
+          <Field label="Screed type" required>
+            <Input
+              value={screed}
+              onChange={(e) => setScreed(e.target.value)}
+            />
           </Field>
-          <Field label="Truck">
-            <Select value={truck} onValueChange={setTruck}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Unassigned</SelectItem>
-                {trucks.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Area (m²)" required>
+              <Input
+                type="number"
+                step="0.01"
+                inputMode="decimal"
+                value={area}
+                onChange={(e) => setArea(e.target.value)}
+              />
+            </Field>
+            <Field label="Depth (mm)" required>
+              <Input
+                type="number"
+                inputMode="numeric"
+                value={depth}
+                onChange={(e) => setDepth(e.target.value)}
+              />
+            </Field>
+          </div>
         </div>
 
         <DialogFooter>
           <Button
             variant="accent"
             onClick={save}
-            disabled={saving || !date}
+            disabled={
+              saving || !date || !screed || Number(area) <= 0 || Number(depth) <= 0
+            }
           >
             {saving && <Loader2 className="size-4 animate-spin" />}
-            Save schedule
+            Save job
           </Button>
         </DialogFooter>
       </DialogContent>

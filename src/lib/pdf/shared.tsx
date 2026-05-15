@@ -1,4 +1,5 @@
-import { Rect, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
+import { Image, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { LOGO_PNG_DATA_URL } from "./logo";
 
 export const COMPANY = {
   name: "Clockwork Screed Ltd",
@@ -109,30 +110,12 @@ export const styles = StyleSheet.create({
   },
 });
 
-/** Brand mark — slate tile with amber accent squares. */
-export function Mark({ size = 26 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 36 36">
-      <Rect x={2} y={2} width={32} height={32} rx={7} fill={C.slate800} />
-      <Rect x={8.5} y={8.5} width={11} height={11} rx={2} fill={C.slate100} />
-      <Rect x={19.5} y={8.5} width={8} height={8} rx={2} fill={C.amber} />
-      <Rect x={8.5} y={20.5} width={8} height={8} rx={2} fill={C.amber} />
-      <Rect x={19.5} y={19.5} width={11} height={11} rx={2} fill={C.slate400} />
-    </Svg>
-  );
-}
-
 export function Letterhead() {
   return (
     <View>
       <View style={styles.headerRow}>
-        <View style={styles.brandRow}>
-          <Mark />
-          <View style={{ marginLeft: 8 }}>
-            <Text style={styles.brandName}>Clockwork Screed</Text>
-            <Text style={styles.brandTagline}>{COMPANY.tagline}</Text>
-          </View>
-        </View>
+        {/* Brand logo, top-left */}
+        <Image src={LOGO_PNG_DATA_URL} style={{ width: 168, height: 49 }} />
         <View style={styles.companyBlock}>
           <Text style={{ fontFamily: "Helvetica-Bold", color: C.slate800 }}>
             {COMPANY.name}

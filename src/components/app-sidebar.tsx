@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,7 +14,6 @@ import {
   Settings,
   Users,
 } from "lucide-react";
-import { Logo } from "@/components/logo";
 import {
   Sidebar,
   SidebarContent,
@@ -48,9 +48,19 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="offcanvas">
-      <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
-        <Link href="/" className="block">
-          <Logo variant="light" />
+      <SidebarHeader className="border-b border-sidebar-border p-3">
+        <Link
+          href="/"
+          className="block rounded-lg bg-white px-3 py-2.5 transition-opacity hover:opacity-90"
+        >
+          <Image
+            src="/clockwork-screed-logo.webp"
+            alt="Clockwork Screed"
+            width={1000}
+            height={289}
+            priority
+            className="h-auto w-full"
+          />
         </Link>
       </SidebarHeader>
 

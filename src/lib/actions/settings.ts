@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { crews, screedTypes, trucks } from "@/lib/db/schema";
+import { normalizeName } from "@/lib/format";
 import {
   crewSchema,
   screedTypeSchema,
@@ -26,7 +27,11 @@ const firstIssue = (msg?: string) => msg ?? "Check the details and try again";
 export async function createCrew(input: CrewInput): Promise<ActionResult> {
   const p = crewSchema.safeParse(input);
   if (!p.success) return { ok: false, error: firstIssue(p.error.issues[0]?.message) };
-  await db.insert(crews).values(p.data);
+  await db.insert(crews).values({
+    name: normalizeName(p.data.name),
+    leadName: normalizeName(p.data.leadName),
+    active: p.data.active,
+  });
   revalidate();
   return { ok: true };
 }
@@ -37,7 +42,14 @@ export async function updateCrew(
 ): Promise<ActionResult> {
   const p = crewSchema.safeParse(input);
   if (!p.success) return { ok: false, error: firstIssue(p.error.issues[0]?.message) };
-  await db.update(crews).set(p.data).where(eq(crews.id, id));
+  await db
+    .update(crews)
+    .set({
+      name: normalizeName(p.data.name),
+      leadName: normalizeName(p.data.leadName),
+      active: p.data.active,
+    })
+    .where(eq(crews.id, id));
   revalidate();
   return { ok: true };
 }

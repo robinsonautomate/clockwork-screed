@@ -8,6 +8,7 @@ import {
   Phone,
   StickyNote,
 } from "lucide-react";
+import { EditContactDialog } from "@/components/edit-contact-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { RowLink } from "@/components/row-link";
@@ -56,6 +57,19 @@ export default async function ContactDetailPage({
             {contact.company ? `${contact.company} · ` : ""}
             {contact.role}
           </span>
+        }
+        actions={
+          <EditContactDialog
+            contact={{
+              id: contact.id,
+              name: contact.name,
+              company: contact.company,
+              role: contact.role,
+              email: contact.email,
+              phone: contact.phone,
+              notes: contact.notes,
+            }}
+          />
         }
       />
 

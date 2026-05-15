@@ -21,6 +21,8 @@ export async function updateJobSchedule(
     };
   }
   const v = parsed.data;
+  const volumeM3 =
+    Math.round(((v.areaM2 * v.depthMm) / 1000) * 100) / 100;
 
   await db
     .update(jobs)
@@ -28,6 +30,10 @@ export async function updateJobSchedule(
       scheduledDate: v.scheduledDate,
       crewId: v.crewId || null,
       truckId: v.truckId || null,
+      screedType: v.screedType,
+      areaM2: String(v.areaM2),
+      depthMm: v.depthMm,
+      volumeM3: String(volumeM3),
     })
     .where(eq(jobs.id, v.jobId));
 

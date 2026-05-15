@@ -55,6 +55,19 @@ export type EnquiryInput = z.infer<typeof enquirySchema>;
 /** Pre-coercion shape — number fields arrive as strings from inputs. */
 export type EnquiryFormValues = z.input<typeof enquirySchema>;
 
+export const enquiryUpdateSchema = z.object({
+  id: z.string().uuid(),
+  projectType: z.enum(["new build", "extension", "refurb", "commercial"]),
+  screedType: z.string().trim().min(2, "Choose a screed type"),
+  targetDate: optionalText(20),
+  areaM2: z.coerce.number().positive("Enter the area in m²").max(100000),
+  depthMm: z.coerce.number().int().positive("Enter the depth").max(500),
+  source: optionalText(80),
+  notes: optionalText(1000),
+  status: z.enum(["new", "quoted", "won", "lost"]),
+});
+export type EnquiryUpdateInput = z.infer<typeof enquiryUpdateSchema>;
+
 /* ── Quote lines ──────────────────────────────────────────────────────── */
 
 export const quoteLineSchema = z.object({
@@ -104,6 +117,9 @@ export const jobScheduleSchema = z.object({
   scheduledDate: z.string().trim().min(8, "Choose a date"),
   crewId: z.string().uuid().optional().or(z.literal("")),
   truckId: z.string().uuid().optional().or(z.literal("")),
+  screedType: z.string().trim().min(2, "Enter the screed type"),
+  areaM2: z.coerce.number().positive("Enter the area").max(100000),
+  depthMm: z.coerce.number().int().positive("Enter the depth").max(500),
 });
 export type JobScheduleInput = z.infer<typeof jobScheduleSchema>;
 

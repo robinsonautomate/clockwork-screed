@@ -50,6 +50,29 @@ export function formatVolume(v: string | number | null | undefined): string {
   return `${num2.format(toNumber(v))} m³`;
 }
 
+/* ── Text casing ──────────────────────────────────────────────────────── */
+
+/** "cloudy" → "Cloudy" */
+export function capitalize(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+/**
+ * Tidy up user-entered names/places. If the text was typed all-uppercase or
+ * all-lowercase, convert it to Title Case; if the user typed deliberate mixed
+ * case (e.g. "PH Homes", "O'Brien"), leave it untouched.
+ */
+export function normalizeName(input: string): string {
+  const s = input.trim();
+  if (!s) return s;
+  const letters = s.replace(/[^A-Za-z]/g, "");
+  if (!letters) return s;
+  const allUpper = letters === letters.toUpperCase();
+  const allLower = letters === letters.toLowerCase();
+  if (!allUpper && !allLower) return s;
+  return s.toLowerCase().replace(/(^|[\s'’\-/(])([a-z])/g, (_m, p, c) => p + c.toUpperCase());
+}
+
 /* ── Dates (UK format) ────────────────────────────────────────────────── */
 
 type DateInput = Date | string | null | undefined;

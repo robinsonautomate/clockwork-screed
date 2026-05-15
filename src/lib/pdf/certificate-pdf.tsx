@@ -1,6 +1,6 @@
 import { Document, Image, Page, Text, View } from "@react-pdf/renderer";
 import type { JobDetail } from "@/lib/queries/jobs";
-import { formatArea, formatDate, formatVolume } from "@/lib/format";
+import { capitalize, formatArea, formatDate, formatVolume } from "@/lib/format";
 import { getAftercareGuidance } from "@/lib/screed";
 import { C, Letterhead, PageFooter, styles } from "./shared";
 
@@ -30,8 +30,10 @@ export function CertificateDocument({ job }: { job: JobDetail }) {
         <Letterhead />
 
         <View style={{ marginTop: 18 }}>
-          <Text style={styles.docTitle}>AFTERCARE CERTIFICATE</Text>
-          <Text style={{ fontSize: 9, color: C.slate500, marginTop: 2 }}>
+          <Text style={[styles.docTitle, { lineHeight: 1 }]}>
+            AFTERCARE CERTIFICATE
+          </Text>
+          <Text style={{ fontSize: 9, color: C.slate500, marginTop: 10 }}>
             Liquid screed installation — drying, heating &amp; protection
             guidance
           </Text>
@@ -83,7 +85,7 @@ export function CertificateDocument({ job }: { job: JobDetail }) {
           <Spec label="Volume" value={formatVolume(pour.actualVolumeM3)} />
           <Spec
             label="Conditions"
-            value={`${pour.conditions ?? "—"}${
+            value={`${pour.conditions ? capitalize(pour.conditions) : "—"}${
               pour.ambientTempC != null ? `, ${pour.ambientTempC}°C` : ""
             }`}
           />
