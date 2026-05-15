@@ -1,0 +1,248 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowLeft, ArrowRight, FileText } from "lucide-react";
+import { GenerateQuoteButton } from "@/components/generate-quote-button";
+import { PageHeader } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
+import { Button } from "@/components/ui/button";
+import { getActiveScreedTypes } from "@/lib/queries/catalog";
+import { getEnquiry } from "@/lib/queries/enquiries";
+import { formatArea, formatDate, gbp, toNumber } from "@/lib/format";
+import { buildDefaultQuoteLines, calcTotals, lineTotal } from "@/lib/quoting";
+
+export const dynamic = "force-dynamic";
+
+export default async function EnquiryDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const enquiry = await getEnquiry(id);
+  if (!enquiry) notFound();
+
+  const quote = enquiry.quotes[0] ?? null;
+  const { site, contact } = enquiry;
+
+  const screedTypes = await getActiveScreedTypes();
+  const match = screedTypes.find((s) => s.name === enquiry.screedType);
+  const pricePerM2 = match ? toNumber(match.defaultPricePerM2) : 18;
+  const suggestedLines = buildDefaultQuoteLines({
+    screedType: enquiry.screedType,
+    pricePerM2,
+    areaM2: toNumber(enquiry.areaM2),
+    depthMm: enquiry.depthMm,
+    projectType: enquiry.projectType,
+  });
+  const suggestedTotals = calcTotals(suggestedLines);
+
+  return (
+    <div className="space-y-5">
+      <Link
+        href="/enquiries"
+        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800"
+      >
+        <ArrowLeft className="size-4" /> Enquiries
+      </Link>
+
+      <PageHeader
+        title={
+          <span className="flex items-center gap-3">
+            <span className="capitalize">
+              {enquiry.projectType} — {site.town}
+            </span>
+            <StatusBadge status={enquiry.status} />
+          </span>
+        }
+        description={`${contact.company ?? contact.name} · logged ${formatDate(enquiry.createdAt)}`}
+        actions={
+          quote ? (
+            <Button asChild variant="accent">
+              <Link href={`/quotes/${quote.id}`}>
+                Open quote <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          ) : (
+            <GenerateQuoteButton enquiryId={enquiry.id} />
+          )
+        }
+      />
+
+      <div className="grid gap-5 lg:grid-cols-3">
+        {/* Details */}
+        <div className="space-y-5">
+          <Section title="Enquiry">
+            <dl className="divide-y divide-slate-100 text-sm">
+              <Row label="Project type">
+                <span className="capitalize">{enquiry.projectType}</span>
+              </Row>
+              <Row label="Screed type">{enquiry.screedType}</Row>
+              <Row label="Area">{formatArea(enquiry.areaM2)}</Row>
+              <Row label="Depth">{enquiry.depthMm} mm</Row>
+              <Row label="Target date">{formatDate(enquiry.targetDate)}</Row>
+              <Row label="Source">{enquiry.source ?? "—"}</Row>
+              {enquiry.notes && <Row label="Notes">{enquiry.notes}</Row>}
+            </dl>
+          </Section>
+
+          <Section title="Site">
+            <div className="space-y-1 px-4 py-3 text-sm">
+              <p className="font-medium text-slate-800">
+                {site.addressLine1}
+              </p>
+              {site.addressLine2 && <p>{site.addressLine2}</p>}
+              <p className="text-slate-600">
+                {site.town}, {site.postcode}
+              </p>
+              {site.accessNotes && (
+                <p className="mt-2 rounded-md bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
+                  Access: {site.accessNotes}
+                </p>
+              )}
+            </div>
+          </Section>
+
+          <Section title="Contact">
+            <div className="space-y-0.5 px-4 py-3 text-sm">
+              <p className="font-medium text-slate-800">{contact.name}</p>
+              {contact.company && (
+                <p className="text-slate-600">{contact.company}</p>
+              )}
+              <p className="text-slate-500 capitalize">{contact.role}</p>
+              {contact.email && <p className="text-slate-500">{contact.email}</p>}
+              {contact.phone && <p className="text-slate-500">{contact.phone}</p>}
+              <Link
+                href={`/contacts/${contact.id}`}
+                className="inline-flex items-center gap-1 pt-1 text-xs font-medium text-amber-600 hover:text-amber-700"
+              >
+                View contact <ArrowRight className="size-3" />
+              </Link>
+            </div>
+          </Section>
+        </div>
+
+        {/* Quote */}
+        <div className="lg:col-span-2">
+          {quote ? (
+            <Section title="Quote">
+              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm font-semibold text-slate-800">
+                      {quote.quoteNumber}
+                    </span>
+                    <StatusBadge status={quote.status} />
+                  </div>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {quote.lines.length} line items · issued{" "}
+                    {formatDate(quote.createdAt)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono text-2xl font-semibold tabular-nums text-slate-900">
+                    {gbp(quote.total)}
+                  </p>
+                  <p className="text-xs text-slate-500">incl. VAT</p>
+                </div>
+              </div>
+              <div className="border-t border-slate-100 p-4">
+                <Button asChild variant="outline" className="w-full sm:w-auto">
+                  <Link href={`/quotes/${quote.id}`}>
+                    Open quote builder <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+              </div>
+            </Section>
+          ) : (
+            <Section
+              title="Suggested quote"
+              subtitle="Pre-filled from the screed type and area — review and adjust after generating."
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
+                      <th className="px-4 py-2 font-medium">Description</th>
+                      <th className="px-4 py-2 text-right font-medium">Qty</th>
+                      <th className="px-4 py-2 text-right font-medium">
+                        Unit price
+                      </th>
+                      <th className="px-4 py-2 text-right font-medium">
+                        Line total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {suggestedLines.map((l, i) => (
+                      <tr key={i} className="border-b border-slate-100">
+                        <td className="px-4 py-2 text-slate-700">
+                          {l.description}
+                        </td>
+                        <td className="px-4 py-2 text-right font-mono tabular-nums text-slate-600">
+                          {l.qty} {l.unit}
+                        </td>
+                        <td className="px-4 py-2 text-right font-mono tabular-nums text-slate-600">
+                          {gbp(l.unitPrice)}
+                        </td>
+                        <td className="px-4 py-2 text-right font-mono font-medium tabular-nums text-slate-800">
+                          {gbp(lineTotal(l.qty, l.unitPrice))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm">
+                  <span className="text-slate-500">Estimated total </span>
+                  <span className="font-mono text-lg font-semibold text-slate-900">
+                    {gbp(suggestedTotals.total)}
+                  </span>
+                  <span className="text-xs text-slate-500"> incl. VAT</span>
+                </div>
+                <GenerateQuoteButton enquiryId={enquiry.id} />
+              </div>
+            </Section>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Section({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-200 bg-slate-50 px-4 py-2.5">
+        <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
+        {subtitle && (
+          <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Row({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex justify-between gap-4 px-4 py-2.5">
+      <dt className="text-slate-500">{label}</dt>
+      <dd className="text-right font-medium text-slate-800">{children}</dd>
+    </div>
+  );
+}
