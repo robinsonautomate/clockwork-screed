@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { invoices, jobs, pourRecords } from "@/lib/db/schema";
+import { invoiceLines, invoices, jobs, pourRecords } from "@/lib/db/schema";
 import { nextInvoiceNumber } from "@/lib/numbering";
 import {
   pourRecordSchema,
@@ -47,7 +47,10 @@ export async function savePourRecord(
     with: {
       pourRecord: { columns: { id: true } },
       invoice: { columns: { id: true } },
-      quote: { columns: { subtotal: true, vat: true, total: true } },
+      quote: {
+        columns: { subtotal: true, vat: true, total: true },
+        with: { lines: { orderBy: (l, { asc }) => [asc(l.sortOrder)] } },
+      },
     },
   });
   if (!job) return { ok: false, error: "Job not found" };
@@ -92,15 +95,34 @@ export async function savePourRecord(
     const invoiceNumber = await nextInvoiceNumber();
     const due = new Date(now);
     due.setDate(due.getDate() + 14);
-    await db.insert(invoices).values({
-      jobId: v.jobId,
-      invoiceNumber,
-      subtotal: job.quote.subtotal,
-      vat: job.quote.vat,
-      total: job.quote.total,
-      status: "draft",
-      dueDate: dateStr(due),
-    });
+    const [invoice] = await db
+      .insert(invoices)
+      .values({
+        jobId: v.jobId,
+        invoiceNumber,
+        subtotal: job.quote.subtotal,
+        vat: job.quote.vat,
+        total: job.quote.total,
+        status: "draft",
+        dueDate: dateStr(due),
+      })
+      .returning({ id: invoices.id });
+
+    // Snapshot the quote's line items onto the invoice so they can be
+    // edited independently afterwards.
+    if (job.quote.lines.length > 0) {
+      await db.insert(invoiceLines).values(
+        job.quote.lines.map((l, i) => ({
+          invoiceId: invoice.id,
+          description: l.description,
+          qty: l.qty,
+          unit: l.unit,
+          unitPrice: l.unitPrice,
+          lineTotal: l.lineTotal,
+          sortOrder: i,
+        })),
+      );
+    }
   }
 
   revalidatePath(`/jobs/${v.jobId}`);

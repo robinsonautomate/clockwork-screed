@@ -68,6 +68,16 @@ export const enquiryUpdateSchema = z.object({
 });
 export type EnquiryUpdateInput = z.infer<typeof enquiryUpdateSchema>;
 
+export const siteUpdateSchema = z.object({
+  id: z.string().uuid(),
+  addressLine1: z.string().trim().min(3, "Enter the site address"),
+  addressLine2: optionalText(140),
+  town: z.string().trim().min(2, "Enter the town"),
+  postcode: z.string().trim().min(4, "Enter the postcode").max(10),
+  accessNotes: optionalText(500),
+});
+export type SiteUpdateInput = z.infer<typeof siteUpdateSchema>;
+
 /* ── Quote lines ──────────────────────────────────────────────────────── */
 
 export const quoteLineSchema = z.object({
@@ -84,6 +94,12 @@ export const quoteSaveSchema = z.object({
   lines: z.array(quoteLineSchema).min(1, "Add at least one line item"),
 });
 export type QuoteSaveInput = z.infer<typeof quoteSaveSchema>;
+
+export const invoiceLinesSaveSchema = z.object({
+  invoiceId: z.string().uuid(),
+  lines: z.array(quoteLineSchema).min(1, "Add at least one line item"),
+});
+export type InvoiceLinesSaveInput = z.infer<typeof invoiceLinesSaveSchema>;
 
 /* ── Crews / Trucks / Screed types (settings) ─────────────────────────── */
 

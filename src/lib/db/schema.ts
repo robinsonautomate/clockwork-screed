@@ -247,6 +247,19 @@ export const invoices = cws.table("invoices", {
   createdAt,
 });
 
+export const invoiceLines = cws.table("invoice_lines", {
+  id: uuid().primaryKey().defaultRandom(),
+  invoiceId: uuid()
+    .notNull()
+    .references(() => invoices.id, { onDelete: "cascade" }),
+  description: text().notNull(),
+  qty: numeric({ precision: 10, scale: 2 }).notNull(),
+  unit: quoteLineUnit().notNull(),
+  unitPrice: numeric({ precision: 12, scale: 2 }).notNull(),
+  lineTotal: numeric({ precision: 12, scale: 2 }).notNull(),
+  sortOrder: integer().notNull().default(0),
+});
+
 /* ── Relations — power Drizzle relational queries (db.query.*) ─────────── */
 
 export const contactsRelations = relations(contacts, ({ many }) => ({
@@ -314,8 +327,16 @@ export const pourRecordsRelations = relations(pourRecords, ({ one }) => ({
   job: one(jobs, { fields: [pourRecords.jobId], references: [jobs.id] }),
 }));
 
-export const invoicesRelations = relations(invoices, ({ one }) => ({
+export const invoicesRelations = relations(invoices, ({ one, many }) => ({
   job: one(jobs, { fields: [invoices.jobId], references: [jobs.id] }),
+  lines: many(invoiceLines),
+}));
+
+export const invoiceLinesRelations = relations(invoiceLines, ({ one }) => ({
+  invoice: one(invoices, {
+    fields: [invoiceLines.invoiceId],
+    references: [invoices.id],
+  }),
 }));
 
 /* ── Inferred types ───────────────────────────────────────────────────── */
@@ -339,6 +360,8 @@ export type PourRecord = typeof pourRecords.$inferSelect;
 export type NewPourRecord = typeof pourRecords.$inferInsert;
 export type Invoice = typeof invoices.$inferSelect;
 export type NewInvoice = typeof invoices.$inferInsert;
+export type InvoiceLine = typeof invoiceLines.$inferSelect;
+export type NewInvoiceLine = typeof invoiceLines.$inferInsert;
 
 export type ContactRole = (typeof contactRole.enumValues)[number];
 export type ProjectType = (typeof projectType.enumValues)[number];

@@ -8,6 +8,13 @@
       "when": 1778844525105,
       "tag": "0000_cultured_yellow_claw",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778852212407,
+      "tag": "0001_black_darkstar",
+      "breakpoints": true
     }
   ]
 }

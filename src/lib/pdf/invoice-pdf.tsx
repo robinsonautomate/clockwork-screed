@@ -14,7 +14,7 @@ const COL = {
 export function InvoiceDocument({ invoice }: { invoice: InvoiceDetail }) {
   const { job } = invoice;
   const { site, contact } = job;
-  const lines = job.quote?.lines ?? [];
+  const lines = invoice.lines;
 
   return (
     <Document

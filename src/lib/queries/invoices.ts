@@ -21,15 +21,11 @@ export async function getInvoice(id: string) {
   return db.query.invoices.findFirst({
     where: eq(invoices.id, id),
     with: {
+      lines: { orderBy: (l, { asc }) => [asc(l.sortOrder)] },
       job: {
         with: {
           site: true,
           contact: true,
-          quote: {
-            with: {
-              lines: { orderBy: (l, { asc }) => [asc(l.sortOrder)] },
-            },
-          },
         },
       },
     },

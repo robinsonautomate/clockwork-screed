@@ -8,9 +8,11 @@ import { normalizeName } from "@/lib/format";
 import {
   enquirySchema,
   enquiryUpdateSchema,
+  siteUpdateSchema,
   type ActionResult,
   type EnquiryInput,
   type EnquiryUpdateInput,
+  type SiteUpdateInput,
 } from "@/lib/validation";
 
 export async function createEnquiry(
@@ -108,6 +110,37 @@ export async function updateEnquiry(
 
   revalidatePath("/enquiries");
   revalidatePath(`/enquiries/${v.id}`);
+  revalidatePath("/");
+  return { ok: true };
+}
+
+export async function updateSite(
+  input: SiteUpdateInput,
+): Promise<ActionResult> {
+  const parsed = siteUpdateSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Check the site details",
+    };
+  }
+  const v = parsed.data;
+
+  await db
+    .update(sites)
+    .set({
+      addressLine1: normalizeName(v.addressLine1),
+      addressLine2: v.addressLine2 ? normalizeName(v.addressLine2) : null,
+      town: normalizeName(v.town),
+      postcode: v.postcode.toUpperCase(),
+      accessNotes: v.accessNotes || null,
+    })
+    .where(eq(sites.id, v.id));
+
+  revalidatePath("/enquiries");
+  revalidatePath("/jobs");
+  revalidatePath("/schedule");
+  revalidatePath("/contacts");
   revalidatePath("/");
   return { ok: true };
 }

@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/empty-state";
 import { EnquiryEditor } from "@/components/enquiry-editor";
 import { GenerateQuoteButton } from "@/components/generate-quote-button";
 import { PageHeader } from "@/components/page-header";
+import { SiteEditor } from "@/components/site-editor";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { getActiveScreedTypes } from "@/lib/queries/catalog";
@@ -76,22 +77,16 @@ export default async function EnquiryDetailPage({
             screedTypes={screedTypes.map((s) => s.name)}
           />
 
-          <Section title="Site">
-            <div className="space-y-1 px-4 py-3 text-sm">
-              <p className="font-medium text-slate-800">
-                {site.addressLine1}
-              </p>
-              {site.addressLine2 && <p>{site.addressLine2}</p>}
-              <p className="text-slate-600">
-                {site.town}, {site.postcode}
-              </p>
-              {site.accessNotes && (
-                <p className="mt-2 rounded-md bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
-                  Access: {site.accessNotes}
-                </p>
-              )}
-            </div>
-          </Section>
+          <SiteEditor
+            site={{
+              id: site.id,
+              addressLine1: site.addressLine1,
+              addressLine2: site.addressLine2,
+              town: site.town,
+              postcode: site.postcode,
+              accessNotes: site.accessNotes,
+            }}
+          />
 
           <Section title="Contact">
             <div className="space-y-0.5 px-4 py-3 text-sm">

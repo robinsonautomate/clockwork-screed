@@ -234,10 +234,10 @@ async function main() {
 
   await db.execute(sql`
     truncate table
-      clockwork.invoices, clockwork.pour_records, clockwork.jobs,
-      clockwork.quote_lines, clockwork.quotes, clockwork.enquiries,
-      clockwork.sites, clockwork.contacts, clockwork.screed_types,
-      clockwork.crews, clockwork.trucks
+      clockwork.invoice_lines, clockwork.invoices, clockwork.pour_records,
+      clockwork.jobs, clockwork.quote_lines, clockwork.quotes,
+      clockwork.enquiries, clockwork.sites, clockwork.contacts,
+      clockwork.screed_types, clockwork.crews, clockwork.trucks
     restart identity cascade
   `);
 
@@ -476,8 +476,27 @@ async function main() {
       createdAt: created,
     };
   });
-  await db.insert(s.invoices).values(invoiceRows);
-  console.log(`  ${invoiceRows.length} invoices`);
+  const invoices = await db
+    .insert(s.invoices)
+    .values(invoiceRows)
+    .returning({ id: s.invoices.id });
+  console.log(`  ${invoices.length} invoices`);
+
+  /* invoice lines — snapshot of the source quote's line items */
+  const invoiceLineRows = completedJobIdx.flatMap((j, k) => {
+    const qi = acceptedQuoteIdxByEnquiry.get(8 + j)!;
+    return quotePayloads[qi].lines.map((l, li) => ({
+      invoiceId: invoices[k].id,
+      description: l.description,
+      qty: dec(l.qty),
+      unit: l.unit,
+      unitPrice: dec(l.unitPrice),
+      lineTotal: dec(l.qty * l.unitPrice),
+      sortOrder: li,
+    }));
+  });
+  await db.insert(s.invoiceLines).values(invoiceLineRows);
+  console.log(`  ${invoiceLineRows.length} invoice lines`);
 
   console.log("✓ Seed complete.");
 }
